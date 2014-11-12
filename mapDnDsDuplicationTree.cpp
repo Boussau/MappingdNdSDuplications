@@ -385,7 +385,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
 	      for ( std::map< int, vector<unsigned int> >::const_iterator it = counts[i].begin(); it != counts[i].end(); it++ ) {
 		for (size_t j = 0; j < it->second.size(); ++j) {
 		  size_t type = it->second[j];
-		  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\",\"" + reg->getTypeName(type+1) + " "+ TextTools::toString<int>(it->first) + "\")" ;
+		  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first) + "))" ;
 		  outputMatrix.push_back(line);
 		}
 	      }
@@ -420,7 +420,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
 	      else {
 		lostBranch = sonsA[0]->getId();
 	      }
-		  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\",\"" + "L" + "\")" ;
+		  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
 		  outputMatrix.push_back(line);
 
                // lossA = lossA +1;
@@ -438,7 +438,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
 	      else {
 		lostBranch = sonsb[0]->getId();
 	      }
-		  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\",\"" + "L" + "\")" ;
+		  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
 	  outputMatrix.push_back(line);
 
 	      //                lossB = lossB + 1;
@@ -450,7 +450,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
         if ( ( a == aold ) || ( a == bold ) ) {
             node->setBranchProperty ( "Ev", BppString ( "D" ) );
 	    int dupBranch = a;
-	    line = "event(" +  TextTools::toString(dupBranch) + ",\"" + familyName + "\",\"" + "D" + "\")" ;
+	    line = "event(" +  TextTools::toString(dupBranch) + ",\"" + familyName + "\"," + "duplication" + ")" ;
 	    outputMatrix.push_back(line);
 
             }

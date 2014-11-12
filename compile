@@ -1,4 +1,6 @@
 #g++  -pipe -o bppphysamp bppPhyloSampler.cpp -I/usr/local/include  -L. -L/usr/local/lib  -g -Wall -fopenmp -std=c++0x -lbpp-core -lbpp-seq -lbpp-phyl
 
- g++ -o mapDnDsDuplicationTree mapDnDsDuplicationTree.cpp -std=c++0x -I/usr/local/include  -L. -L/usr/local/lib  -lbpp-core -lbpp-seq -lbpp-phyl 
+ g++ -o mapDnDsDuplicationTree mapDnDsDuplicationTree.cpp -std=c++0x -I/usr/local/include  -L. -L/usr/local/lib  -lbpp-phyl -lbpp-seq -lbpp-core --static 
+
+
 
