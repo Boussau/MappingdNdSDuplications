@@ -532,18 +532,21 @@ int main(int args, char ** argv)
     TreeTemplate<Node> * spTree = dynamic_cast < TreeTemplate < Node > * > (newick.read(spTreeFile));
     breadthFirstreNumber(*spTree);
     
+    string spTreeIdOut = ApplicationTools::getStringParameter("output.species.tree_with_id.file", mapnh.getParams(), spTreeFile + "_withId");
+      Nhx nhx(true);
+      nhx.write(*spTree, spTreeIdOut);
+
     //Get the initial tree
 //    Tree* tree = PhylogeneticsApplicationTools::getTree(mapnh.getParams());
     string treeIn = ApplicationTools::getAFilePath("input.tree.file", mapnh.getParams(), false, false);
-    Nhx nhxb(true);
-    Tree* tree = nhxb.read(treeIn);
+
+    Tree* tree = nhx.read(treeIn);
     ApplicationTools::displayResult("Number of leaves", TextTools::toString(tree->getNumberOfLeaves()));
 
-    std::cout << nhxb.treeToParenthesis (*tree) <<std::endl;
+    std::cout << nhx.treeToParenthesis (*tree) <<std::endl;
     //Convert to NHX if input tree is newick or nexus?
     string treeIdOut = ApplicationTools::getAFilePath("output.tree_with_id.file", mapnh.getParams(), false, false);
     if (treeIdOut != "none") {
-      Nhx nhx(true);
       nhx.write(*tree, treeIdOut);
     }
     
