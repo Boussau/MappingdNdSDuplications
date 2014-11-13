@@ -249,7 +249,6 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
     vector<double> countsf(nbTypes, 0);
 //    for (unsigned int i = 0; !error && i < nbSites; ++i) {
     for (unsigned int i = 0; i < nbSites; ++i) {
-	std::cout << "i: "<< i <<std::endl;
       double s = 0;
       for (unsigned int t = 0; t < nbTypes; ++t) {
 	countsf[t] = 0;
@@ -385,7 +384,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
 	      for ( std::map< int, vector<unsigned int> >::const_iterator it = counts[i].begin(); it != counts[i].end(); it++ ) {
 		for (size_t j = 0; j < it->second.size(); ++j) {
 		  size_t type = it->second[j];
-		  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first) + "))" ;
+		  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
 		  outputMatrix.push_back(line);
 		}
 	      }
