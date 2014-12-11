@@ -42,6 +42,9 @@
 
 
 #include "mapDnDsDuplicationTree.h"
+#include <Bpp/Phyl/Io/BppOFrequenciesSetFormat.h>
+#include <Bpp/Phyl/Model/FrequenciesSet/CodonFrequenciesSet.h>
+#include <Bpp/Seq/Io/Fasta.h>
 
 /*************************** COMPILATION
 
@@ -321,7 +324,8 @@ vector < std::string > buildAnnotatedCountMatrix(
                     const vector< vector<unsigned int> >& counts,
                     const vector<int>& ids,
                     TreeTemplate<Node> * cTree, 
-                    TreeTemplate<Node> * spTree    )
+                    TreeTemplate<Node> * spTree
+                                                )
 {
   vector < std::string > outputMatrix;
   string head  = string("NodeID") + string("\t") + string("FatherNodeID") + string("\t") + string("SpID") + string("\t") + string("FatherSpID") + string("\t") + string("FatherSon") ;
@@ -365,8 +369,9 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
                     const vector<int>& ids,
                     TreeTemplate<Node> * cTree, 
                     TreeTemplate<Node> * spTree, 
-		    const string &familyName, 
-		    const size_t nbSubstitutionTypes )
+                    const string &familyName, 
+                    const size_t nbSubstitutionTypes, 
+                    std::vector<unsigned int>& sumSubst )
 {
   vector < std::string > outputMatrix;
   /*string head  = string("NodeID") + string("\t") + string("FatherNodeID") + string("\t") + string("SpID") + string("\t") + string("FatherSpID") + string("\t") + string("FatherSon") ;
@@ -382,11 +387,12 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
       if (node->getFather()->hasNodeProperty("S") && node->hasNodeProperty("S")) {
 	if (counts[i].size() > 0) {
 	      for ( std::map< int, vector<unsigned int> >::const_iterator it = counts[i].begin(); it != counts[i].end(); it++ ) {
-		for (size_t j = 0; j < it->second.size(); ++j) {
-		  size_t type = it->second[j];
-		  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
-		  outputMatrix.push_back(line);
-		}
+          for (size_t j = 0; j < it->second.size(); ++j) {
+            size_t type = it->second[j];
+            line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+            sumSubst[it->first] += 1;
+            outputMatrix.push_back(line);
+          }
 	      }
 	//      std::map< int, vector<unsigned int> >::const_iterator seqtosp;
      //   line = TextTools::toString(ids[i]) +  "\t" + TextTools::toString(node->getFather()->getId()) + "\t" + TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + "\t" + TextTools::toString(*(dynamic_cast<const BppString*>(node->getFather()->getNodeProperty("S"))));
@@ -584,19 +590,19 @@ int main(int args, char ** argv)
 
 
     //Now perform mapping using a JC model:
-    SubstitutionModel* model = 0;
+    unique_ptr<SubstitutionModel> model ;
     if (AlphabetTools::isNucleicAlphabet(alphabet)) {
-      model = new JCnuc(dynamic_cast<NucleicAlphabet*>(alphabet));
+      model.reset( new JCnuc(dynamic_cast<NucleicAlphabet*>(alphabet) ) );
     } else if (AlphabetTools::isProteicAlphabet(alphabet)) {
-      model = new JCprot(dynamic_cast<ProteicAlphabet*>(alphabet));
+      model.reset( new JCprot(dynamic_cast<ProteicAlphabet*>(alphabet) ) );
     } else if (AlphabetTools::isCodonAlphabet(alphabet)) {
       if (ApplicationTools::parameterExists("model", mapnh.getParams())) {
-        model = PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams());
+        model.reset(  PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams() ) );
       } else {
       //  model = new CodonNeutralReversibleSubstitutionModel(
         //                                                    dynamic_cast<const CodonAlphabet*>(geneticCode->getSourceAlphabet()),
           //                                                  new JCnuc(dynamic_cast<CodonAlphabet*>(alphabet)->getNucleicAlphabet()));
-       model = PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams());
+       model.reset( PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams() ) );
       }
     }
     else
@@ -606,17 +612,17 @@ int main(int args, char ** argv)
     vector <string> lines;
     if (regType == "All") {
       stationarity = ApplicationTools::getBooleanParameter("stationarity", regArgs, true);
-      reg = new ComprehensiveSubstitutionRegister(model, false);
+      reg = new ComprehensiveSubstitutionRegister(model.get(), false);
     }
     else if (regType == "GC") {
       if (AlphabetTools::isNucleicAlphabet(alphabet)) {
         stationarity = ApplicationTools::getBooleanParameter("stationarity", regArgs, true);
-        reg = new GCSubstitutionRegister(dynamic_cast<NucleotideSubstitutionModel*>(model), false);
+        reg = new GCSubstitutionRegister(dynamic_cast<NucleotideSubstitutionModel*>(model.get()), false);
       } else
         throw Exception("GC categorization is only available for nucleotide alphabet!");
     } else if (regType == "TsTv") {
       if (AlphabetTools::isNucleicAlphabet(alphabet))
-        reg = new TsTvSubstitutionRegister(dynamic_cast<NucleotideSubstitutionModel*>(model));
+        reg = new TsTvSubstitutionRegister(dynamic_cast<NucleotideSubstitutionModel*>(model.get()));
       else
         throw Exception("TsTv categorization is only available for nucleotide alphabet!");
     } else if (regType == "DnDs") {
@@ -627,16 +633,35 @@ int main(int args, char ** argv)
           ApplicationTools::displayWarning("No genetic code provided, standard code used.");
         }
         geneticCode.reset(SequenceApplicationTools::getGeneticCode(dynamic_cast<CodonAlphabet*>(alphabet)->getNucleicAlphabet(), code));*/
-        reg = new DnDsSubstitutionRegister( dynamic_cast<CodonSubstitutionModel* >(model), false);
+
+   //By default, we choose F0... string freqOpt = ApplicationTools::getStringParameter("frequencies", mapnh.getParams(), "F0", "", true, 0);
+  //  BppOFrequenciesSetFormat freqReader(BppOFrequenciesSetFormat::ALL, 0, 0);
+   // freqReader.setGeneticCode(geneticCode.get()); //This uses the same instance as the one that will be used by the model.
+
+	unique_ptr<FrequenciesSet> codonFreqs ;
+codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequenciesSet::F0, geneticCode->clone() ) );
+
+//    auto_ptr<FrequenciesSet> codonFreqs(freqReader.read(pCA, freqOpt, data, false));
+
+      model.reset(new YN98( geneticCode.get(), codonFreqs.release()));
+
+
+        reg = new DnDsSubstitutionRegister( dynamic_cast<CodonSubstitutionModel* >(model.get()), false);
       } else
         throw Exception("DnDs categorization is only available for codon alphabet!");
     } else
       throw Exception("Unsupported substitution categorization: " + regType);
     
+    //Printing out the alignment in which sites have been selected
+    std::string alnNames = ApplicationTools::getAFilePath ("input.sequence.file",
+        mapnh.getParams (), true,
+        true);
+    Fasta* fasta = new Fasta(); 
+    fasta->writeSequences( alnNames+".refined", *sites );
     
     DiscreteDistribution* rDist = new ConstantDistribution( 1. );
     
-    DRHomogeneousTreeLikelihood drtl(*tree, *sites, model, rDist, false, false);
+    DRHomogeneousTreeLikelihood drtl(*tree, *sites, model.get(), rDist, false, false);
     drtl.initialize();
     
     //Optimization of parameters:
@@ -649,18 +674,38 @@ int main(int args, char ** argv)
       ApplicationTools::displayResult("Saturation threshold used", thresholdSat);
 
     bool siteBranchWise = ApplicationTools::getBooleanParameter("site.and.branch", regArgs, true);
+
+    //We want to get dN/dS ratio, so we need to set a default omega:
+    auto_ptr<SubstitutionModel> nullModel(model->clone());
+        
+        ParameterList pl;
+        const ParameterList pl0 = nullModel->getParameters();
+        
+	vector<string> pn = pl0.getMatchingParameterNames( "YN98.omega*" );
+          for (size_t j = 0; j < pn.size(); ++j)
+          {
+            pl.addParameter(Parameter(pn[j], 1.0) );
+          }
+	nullModel->matchParametersValues(pl);
+
     if (siteBranchWise) {
        //vector on branches, map on sites, last vector on substitution types
       vector< map< int, vector<unsigned int> > > counts(ids.size()); 
       size_t nbTypes;
-      counts = getCountsPerBranchPerSite(drtl, ids, model, *reg, stationarity, thresholdSat, familyName, nbTypes);
-      lines = buildAnnotatedSitewiseCountOutput(reg, counts, ids, dynamic_cast<TreeTemplate<Node>*>(tree), spTree, familyName, nbTypes );
-      
-   
+      std::vector<unsigned int> sumSubst (sites->getNumberOfSites(), 0);
+      counts = getCountsPerBranchPerSite(drtl, ids, model.get(), *reg, stationarity, thresholdSat, familyName, nbTypes);
+      lines = buildAnnotatedSitewiseCountOutput(reg, counts, ids, dynamic_cast<TreeTemplate<Node>*>(tree), spTree, familyName, nbTypes, sumSubst );
+      //Writing out the site-wise sums of substitutions
+      std::string sumSubstFile = alnNames+".sumSubst";
+      std::ofstream out (sumSubstFile.c_str(), std::ios::out);
+      for (unsigned int i = 0; i < sumSubst.size(); ++i) {
+        out << sumSubst[i] <<std::endl;
+      }
+      out.close(); 
     }
 else {
       vector< vector<unsigned int> > counts;
-    counts = getCountsPerBranch(drtl, ids, model, *reg, stationarity, thresholdSat);
+    counts = getCountsPerBranch(drtl, ids, model.get(), *reg, stationarity, thresholdSat);
 
     //Write count trees:
     string treePathPrefix = ApplicationTools::getStringParameter("output.counts.tree.prefix", mapnh.getParams(), "none");
@@ -691,7 +736,7 @@ else {
     delete alphabet;
     delete sites;
     delete tree;
-    delete model;
+   // delete model;
     delete rDist;
     delete reg;
     mapnh.done();
