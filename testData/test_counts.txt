@@ -1,0 +1,4 @@
+event(1,"test",L->M(2))
+event(1,"test",L->A(6))
+event(1,"test",duplication)
+event(2,"test",L->I(6))

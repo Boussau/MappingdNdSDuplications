@@ -59,6 +59,8 @@ using namespace std;
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 #include <Bpp/Seq/SiteTools.h>
 #include <Bpp/Seq/App/SequenceApplicationTools.h>
+#include <Bpp/Seq/Io/Fasta.h>
+
 
 // From bpp-phyl:
 #include <Bpp/Phyl/Tree.h>
@@ -70,8 +72,10 @@ using namespace std;
 #include <Bpp/Phyl/Io/Newick.h>
 #include <Bpp/Phyl/Io/Nhx.h>
 #include <Bpp/Phyl/Model/Nucleotide/JCnuc.h>
-#include <Bpp/Phyl/Model/Nucleotide/HKY85.h>
+#include <Bpp/Phyl/Model/Nucleotide/GTR.h>
 #include <Bpp/Phyl/Model/Protein/JCprot.h>
+#include <Bpp/Phyl/Model/Protein/LLG08_UL3.h>
+#include <Bpp/Phyl/Model/Protein/LG08.h>
 //#include <Bpp/Phyl/Model/CodonNeutralReversibleSubstitutionModel.h>
 #include <Bpp/Phyl/Model/Codon/CodonSubstitutionModel.h>
 

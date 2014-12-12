@@ -1,0 +1,2 @@
+/home/boussau/Programs/Biopp/testnh/TestNH/mapnh input.tree.file=test_id.nwk  input.sequence.file=test.fa input.sequence.sites_to_use=all output.counts.file=test_counts.txt map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30
+

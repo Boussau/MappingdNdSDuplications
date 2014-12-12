@@ -44,7 +44,6 @@
 #include "mapDnDsDuplicationTree.h"
 #include <Bpp/Phyl/Io/BppOFrequenciesSetFormat.h>
 #include <Bpp/Phyl/Model/FrequenciesSet/CodonFrequenciesSet.h>
-#include <Bpp/Seq/Io/Fasta.h>
 
 /*************************** COMPILATION
 
@@ -273,6 +272,12 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
       //Now we have countsf, which contains substitution counts for the current site.
       //We round the counts to the closest integer.
       for (unsigned int t = 0; t < nbTypes; ++t) {
+      /*  if (countsf[t] > 0.35) {
+      countsf[t] = 1;
+        }
+        else {
+          countsf[t] = 0;
+        }*/
 	  countsf[t] = static_cast<unsigned int>(floor(countsf[t] + 0.5)); //Round counts
 	  //Now we save these counts if they are positive.
 	  if (countsf[t] > 0) {
@@ -589,12 +594,15 @@ int main(int args, char ** argv)
 	}
 
 
-    //Now perform mapping using a JC model:
+    //Now perform mapping using a JC model for ncleotides, or better model for protens and codons:
     unique_ptr<SubstitutionModel> model ;
     if (AlphabetTools::isNucleicAlphabet(alphabet)) {
-      model.reset( new JCnuc(dynamic_cast<NucleicAlphabet*>(alphabet) ) );
+//      model.reset( new JCnuc(dynamic_cast<NucleicAlphabet*>(alphabet) ) );
+      model.reset( new GTR(dynamic_cast<NucleicAlphabet*>(alphabet) ) );
     } else if (AlphabetTools::isProteicAlphabet(alphabet)) {
-      model.reset( new JCprot(dynamic_cast<ProteicAlphabet*>(alphabet) ) );
+//      model.reset( new JCprot(dynamic_cast<ProteicAlphabet*>(alphabet) ) );
+//      model.reset( new LLG08_UL3(dynamic_cast<ProteicAlphabet*>(alphabet) ) );
+        model.reset( new LG08(dynamic_cast<ProteicAlphabet*>(alphabet) ) );
     } else if (AlphabetTools::isCodonAlphabet(alphabet)) {
       if (ApplicationTools::parameterExists("model", mapnh.getParams())) {
         model.reset(  PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams() ) );
@@ -610,7 +618,7 @@ int main(int args, char ** argv)
 
 
     vector <string> lines;
-    if (regType == "All") {
+    if (regType == "All"|| regType == "all") {
       stationarity = ApplicationTools::getBooleanParameter("stationarity", regArgs, true);
       reg = new ComprehensiveSubstitutionRegister(model.get(), false);
     }
