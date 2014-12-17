@@ -253,7 +253,7 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
     for (unsigned int i = 0; i < nbSites; ++i) {
       double s = 0;
       for (unsigned int t = 0; t < nbTypes; ++t) {
-	countsf[t] = 0;
+        countsf[t] = 0;
         tmp[t] = (*mapping)(k, i, t);
         error = std::isnan((double)tmp[t]);
      /*   if (error)
@@ -272,19 +272,12 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
       //Now we have countsf, which contains substitution counts for the current site.
       //We round the counts to the closest integer.
       for (unsigned int t = 0; t < nbTypes; ++t) {
-      /*  if (countsf[t] > 0.35) {
-      countsf[t] = 1;
+          countsf[t] = static_cast<unsigned int>(floor(countsf[t] + 0.5)); //Round counts
+        //Now we save these counts if they are positive.
+        if (countsf[t] > 0) {
+            counts[k][i].push_back(t) ;   
         }
-        else {
-          countsf[t] = 0;
-        }*/
-	  countsf[t] = static_cast<unsigned int>(floor(countsf[t] + 0.5)); //Round counts
-	  //Now we save these counts if they are positive.
-	  if (countsf[t] > 0) {
-	      counts[k][i].push_back(t) ;   
-	  }
       }
-      
     }
     
   ERROR:
@@ -301,6 +294,92 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
     }
     
   }
+  return counts;
+}
+
+
+/******************************************************************************/
+
+vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
+                                                  DRTreeLikelihood& tl,
+                                                  const vector<int>& ids,
+                                                  VectorSiteContainer* sites,
+                                                  const SubstitutionRegister& reg,
+                                                  bool stationarity = true,
+                                                  double threshold = -1, 
+                                                  const string familyName = "none", 
+                                                  size_t nbTypes = 0
+                                                  )
+
+{
+  AncestralStateReconstruction *asr = new MarginalAncestralStateReconstruction(&tl);
+  bool  probMethod = true;
+ 
+      TreeTemplate<Node> ttree ( tl.getTree() );
+      vector<Node *> nodes = ttree.getNodes();
+      size_t nbNodes = nodes.size();
+      // Get the rate class with maximum posterior probability:
+      vector<size_t> classes = tl.getRateClassWithMaxPostProbOfEachSite();
+      // Get the posterior rate, i.e. rate averaged over all posterior probabilities:
+      Vdouble rates = tl.getPosteriorRateOfEachSite();
+      // Get the ancestral sequences:
+      vector<Sequence*> sequences(nbNodes);
+      for (size_t i = 0; i < nbNodes; i++) {
+        Node *node = nodes[i];
+          if (node->isLeaf()) {
+            sequences[i] = sites->getSequence(node->getName() ).clone();
+          } else {
+            sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
+          }
+      }
+
+      //Now we have all the sequences at all nodes, including leaves
+      //We need to compute counts
+        //vector on branches, map on sites, last vector on substitution types
+  vector< map< int, vector<unsigned int> > > counts(ids.size()); 
+  
+  unsigned int nbSites = sites->getNumberOfSites();
+
+  nbTypes = reg.getNumberOfSubstitutionTypes();
+
+  /*  const Alphabet *alpha = tl.getAlphabet()->clone();
+    const SubstitutionModel *model = tl.getSubstitutionModel(0, 0)->clone();*/
+  for (size_t k = 0; k < nodes.size(); ++k) {
+    if (nodes[k]->hasFather() ) {
+      Sequence* seqChild = sequences.at( nodes[k]->getId() - 1 );
+
+      Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() - 1 );
+
+      vector<double> tmp(nbTypes, 0);
+      unsigned int nbIgnored = 0;
+      bool error = false;
+      vector<double> countsf(nbTypes, 0);
+
+      for (unsigned int i = 0; i < nbSites; ++i) {
+        double s = 0;
+        for (unsigned int t = 0; t < nbTypes; ++t) {
+          countsf[t] = 0;
+        }
+
+        //Now we compare the parent and child sequences
+        if ( seqFather->getValue(i) != seqChild->getValue(i) ) { //There is a substitution
+        /*  std::cout << "Thre is a sub "<< seqFather->getValue(i) <<" "<< seqChild->getValue(i) << std::endl;
+           std::cout << "Thre is a sub "<< seqFather->getChar(i) <<" "<< seqChild->getChar(i) << std::endl;
+          std::cout << "Thre is a sub "<< alpha->charToInt( seqFather->getChar(i) ) <<" "<< alpha->charToInt( seqChild->getChar(i) ) << std::endl;
+                     std::cout << "Thre is a sub "<< model->getAlphabetStateAsInt( seqFather->getValue(i) ) <<" "<< model->getAlphabetStateAsInt ( seqChild->getValue(i) ) << std::endl;*/
+
+        // size_t type = reg.getType ( alpha->charToInt( seqFather->getChar(i) ), alpha->charToInt( seqChild->getChar(i) ) ) - 1 ;
+         size_t type = reg.getType ( seqFather->getValue(i) , seqChild->getValue(i) ) - 1 ;
+          countsf[type] = 1;
+        }
+        for (unsigned int t = 0; t < nbTypes; ++t) {
+          if (countsf[t] > 0) {
+            counts[k][i].push_back(t) ;   
+          }
+        }
+      }
+    }
+  }   
   return counts;
 }
 
@@ -701,7 +780,13 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
       vector< map< int, vector<unsigned int> > > counts(ids.size()); 
       size_t nbTypes;
       std::vector<unsigned int> sumSubst (sites->getNumberOfSites(), 0);
-      counts = getCountsPerBranchPerSite(drtl, ids, model.get(), *reg, stationarity, thresholdSat, familyName, nbTypes);
+      bool asr = ApplicationTools::getBooleanParameter("ancestral.state.reconstruction", regArgs, true);
+      if (asr) {
+        counts = getCountsPerBranchPerSiteASR(drtl, ids, sites, *reg, stationarity, thresholdSat, familyName, nbTypes );
+      }
+      else {
+        counts = getCountsPerBranchPerSite(drtl, ids, model.get(), *reg, stationarity, thresholdSat, familyName, nbTypes);
+      }
       lines = buildAnnotatedSitewiseCountOutput(reg, counts, ids, dynamic_cast<TreeTemplate<Node>*>(tree), spTree, familyName, nbTypes, sumSubst );
       //Writing out the site-wise sums of substitutions
       std::string sumSubstFile = alnNames+".sumSubst";
