@@ -760,7 +760,7 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
     if (thresholdSat > 0)
       ApplicationTools::displayResult("Saturation threshold used", thresholdSat);
 
-    bool siteBranchWise = ApplicationTools::getBooleanParameter("site.and.branch", regArgs, true);
+    bool siteBranchWise = ApplicationTools::getBooleanParameter("site.and.branch", mapnh.getParams(), true);
 
     //We want to get dN/dS ratio, so we need to set a default omega:
     auto_ptr<SubstitutionModel> nullModel(model->clone());
@@ -780,7 +780,7 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
       vector< map< int, vector<unsigned int> > > counts(ids.size()); 
       size_t nbTypes;
       std::vector<unsigned int> sumSubst (sites->getNumberOfSites(), 0);
-      bool asr = ApplicationTools::getBooleanParameter("ancestral.state.reconstruction", regArgs, true);
+      bool asr = ApplicationTools::getBooleanParameter("ancestral.state.reconstruction", mapnh.getParams(), true);
       if (asr) {
         counts = getCountsPerBranchPerSiteASR(drtl, ids, sites, *reg, stationarity, thresholdSat, familyName, nbTypes );
       }
