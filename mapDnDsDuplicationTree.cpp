@@ -226,14 +226,14 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
   // auto_ptr<SubstitutionCount> count(new DecompositionSubstitutionCount(model, reg.clone()));
   
   //SubstitutionCount* count = new SimpleSubstitutionCount(reg);
-  const CategorySubstitutionRegister* creg = 0;
+ /* const CategorySubstitutionRegister* creg = 0;
   if (!stationarity) {
     try {
       creg = &dynamic_cast<const CategorySubstitutionRegister&>(reg);
     } catch (Exception& ex) {
       throw Exception("The stationarity option can only be used with a category substitution register.");
     }
-  }
+  }*/
   //SubstitutionMappingTools::computeSubstitutionVectors(drtl, ids, *count, false);
   unique_ptr<ProbabilisticSubstitutionMapping> mapping(SubstitutionMappingTools::computeSubstitutionVectors(drtl, ids, *count, false));
   
@@ -247,7 +247,7 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
     //vector<double> countsf = SubstitutionMappingTools::computeSumForBranch(*mapping, mapping->getNodeIndex(ids[i]));
     vector<double> tmp(nbTypes, 0);
     unsigned int nbIgnored = 0;
-    bool error = false;
+   // bool error = false;
     vector<double> countsf(nbTypes, 0);
 //    for (unsigned int i = 0; !error && i < nbSites; ++i) {
     for (unsigned int i = 0; i < nbSites; ++i) {
@@ -255,8 +255,8 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
       for (unsigned int t = 0; t < nbTypes; ++t) {
         countsf[t] = 0;
         tmp[t] = (*mapping)(k, i, t);
-        error = std::isnan((double)tmp[t]);
-     /*   if (error)
+     /*   error = std::isnan((double)tmp[t]);
+        if (error)
           goto ERROR;*/
         s += tmp[t];
       }
@@ -279,7 +279,7 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
         }
       }
     }
-    
+    /*
   ERROR:
     if (error) {
       //We do nothing. This happens for small branches.
@@ -292,7 +292,7 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSite(
       }
       
     }
-    
+    */
   }
   return counts;
 }
@@ -313,7 +313,7 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
 
 {
   AncestralStateReconstruction *asr = new MarginalAncestralStateReconstruction(&tl);
-  bool  probMethod = true;
+  //bool  probMethod = true;
  
       TreeTemplate<Node> ttree ( tl.getTree() );
       vector<Node *> nodes = ttree.getNodes();
@@ -341,40 +341,60 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
   unsigned int nbSites = sites->getNumberOfSites();
 
   nbTypes = reg.getNumberOfSubstitutionTypes();
-
-  /*  const Alphabet *alpha = tl.getAlphabet()->clone();
+  const Alphabet *alpha = tl.getAlphabet()->clone();
+  /*  
     const SubstitutionModel *model = tl.getSubstitutionModel(0, 0)->clone();*/
-  for (size_t k = 0; k < nodes.size(); ++k) {
+  for (size_t k = 0; k < nbNodes; ++k) {
     if (nodes[k]->hasFather() ) {
-      Sequence* seqChild = sequences.at( nodes[k]->getId() - 1 );
+        //std::cout << "HAHA " << nodes[k]->getId() /*- 1*/ <<std::endl;
+      Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
 
-      Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() - 1 );
+      Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
 
       vector<double> tmp(nbTypes, 0);
-      unsigned int nbIgnored = 0;
-      bool error = false;
-      vector<double> countsf(nbTypes, 0);
+     // unsigned int nbIgnored = 0;
+      //bool error = false;
+      vector<double> countsf(nbTypes, 0.0);
 
       for (unsigned int i = 0; i < nbSites; ++i) {
-        double s = 0;
         for (unsigned int t = 0; t < nbTypes; ++t) {
-          countsf[t] = 0;
+          countsf[t] = 0.0;
         }
 
+        try {
         //Now we compare the parent and child sequences
-        if ( seqFather->getValue(i) != seqChild->getValue(i) ) { //There is a substitution
-        /*  std::cout << "Thre is a sub "<< seqFather->getValue(i) <<" "<< seqChild->getValue(i) << std::endl;
-           std::cout << "Thre is a sub "<< seqFather->getChar(i) <<" "<< seqChild->getChar(i) << std::endl;
-          std::cout << "Thre is a sub "<< alpha->charToInt( seqFather->getChar(i) ) <<" "<< alpha->charToInt( seqChild->getChar(i) ) << std::endl;
-                     std::cout << "Thre is a sub "<< model->getAlphabetStateAsInt( seqFather->getValue(i) ) <<" "<< model->getAlphabetStateAsInt ( seqChild->getValue(i) ) << std::endl;*/
+          if ( seqFather->getValue(i) != seqChild->getValue(i) ) { //There is a substitution
+          /*  std::cout << "Thre is a sub "<< seqFather->getValue(i) <<" "<< seqChild->getValue(i) << std::endl;
+            std::cout << "Thre is a sub "<< seqFather->getChar(i) <<" "<< seqChild->getChar(i) << std::endl;
+            std::cout << "Thre is a sub "<< alpha->charToInt( seqFather->getChar(i) ) <<" "<< alpha->charToInt( seqChild->getChar(i) ) << std::endl;
+                      std::cout << "Thre is a sub "<< model->getAlphabetStateAsInt( seqFather->getValue(i) ) <<" "<< model->getAlphabetStateAsInt ( seqChild->getValue(i) ) << std::endl;*/
 
-        // size_t type = reg.getType ( alpha->charToInt( seqFather->getChar(i) ), alpha->charToInt( seqChild->getChar(i) ) ) - 1 ;
-         size_t type = reg.getType ( seqFather->getValue(i) , seqChild->getValue(i) ) - 1 ;
-          countsf[type] = 1;
+          // size_t type = reg.getType ( alpha->charToInt( seqFather->getChar(i) ), alpha->charToInt( seqChild->getChar(i) ) ) - 1 ;
+          
+          //std::cout << "seqFather->getValue(i): " << seqFather->getValue(i) << " "<< seqFather->getChar(i) <<std::endl;
+          //std::cout << "seqChild->getValue(i): " << seqChild->getValue(i) << " " << seqChild->getChar(i) <<std::endl;
+          if (alpha->isUnresolved(seqFather->getValue(i) ) ||  alpha->isUnresolved( seqChild->getValue(i) ) ) {
+            //std::cout << "ARE UNRESOLVED" << std::endl;
+          }
+          else {
+            size_t type = reg.getType ( seqFather->getValue(i) , seqChild->getValue(i) ) - 1 ; 
+            if (type > nbTypes || type < 0) {
+              std::cout << "Substitution out of the admitted alphabet. Not counting."<<std::endl; 
+            }
+            else {
+              countsf[type] = 1;
+            }
+            //std::cout << "type: "<< type <<std::endl;
+            }
+          }
+        }
+        catch (Exception& ex) {
+          std::cout <<"Character out of the admitted alphabet. Possibly a substitution involving an unresolved state (e.g. N)... Not counting." << std::endl;
         }
         for (unsigned int t = 0; t < nbTypes; ++t) {
+          //std::cout << "k "<< k << " i "<< i << " t "<< t << std::endl;
           if (countsf[t] > 0) {
-            counts[k][i].push_back(t) ;   
+            counts[k][i].push_back(t) ;               
           }
         }
       }
@@ -493,9 +513,9 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
 
         int aold = a;
         int bold = b;
-        int lossA = 0;
+     /*   int lossA = 0;
         int lossB = 0;
-
+*/
         while ( a!=b ) {
             if ( a>b ) {
 	      int olda = a;
@@ -733,7 +753,7 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
       model.reset(new YN98( geneticCode.get(), codonFreqs.release()));
 
 
-        reg = new DnDsSubstitutionRegister( dynamic_cast<CodonSubstitutionModel* >(model.get()), false);
+        reg = new DnDsSubstitutionRegister( dynamic_cast<CodonSubstitutionModel* >(model.get()), true); //true ensures that we count multiple substitutions as well
       } else
         throw Exception("DnDs categorization is only available for codon alphabet!");
     } else
@@ -778,7 +798,7 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
     if (siteBranchWise) {
        //vector on branches, map on sites, last vector on substitution types
       vector< map< int, vector<unsigned int> > > counts(ids.size()); 
-      size_t nbTypes;
+      size_t nbTypes = 0;
       std::vector<unsigned int> sumSubst (sites->getNumberOfSites(), 0);
       bool asr = ApplicationTools::getBooleanParameter("ancestral.state.reconstruction", mapnh.getParams(), true);
       if (asr) {

@@ -1,3 +1,3 @@
-rm test_counts.txt ; ../mapDnDsDuplicationTree species.tree.file=test.Sptree input.tree.file=test.tree  input.sequence.file=test.fa  input.sequence.sites_to_use=all output.counts.file=test_counts.txt output.tree_with_id.file=test_id.nwk family.name=test map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30
+rm test_counts.txt ; ../mapDnDsDuplicationTree species.tree.file=test.Sptree input.tree.file=test.tree  input.sequence.file=test.fa  input.sequence.sites_to_use=all output.counts.file=test_counts.txt output.tree_with_id.file=test_id.nwk family.name=test map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
 
 
