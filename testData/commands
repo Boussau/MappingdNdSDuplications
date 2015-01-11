@@ -1,3 +1,9 @@
+#One duplication, no loss
 rm test_counts.txt ; ../mapDnDsDuplicationTree species.tree.file=test.Sptree input.tree.file=test.tree  input.sequence.file=test.fa  input.sequence.sites_to_use=all output.counts.file=test_counts.txt output.tree_with_id.file=test_id.nwk family.name=test map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
 
+#One duplication, one loss
+rm test_counts2.txt ; ../mapDnDsDuplicationTree species.tree.file=test2.Sptree input.tree.file=test2.tree  input.sequence.file=test2.fa  input.sequence.sites_to_use=all output.counts.file=test_counts2.txt output.tree_with_id.file=test_id2.nwk family.name=test2 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
+
+#Simple test, one loss, no duplication
+rm test_counts3.txt ; ../mapDnDsDuplicationTree species.tree.file=test3.Sptree input.tree.file=test3.tree  input.sequence.file=test3.fa  input.sequence.sites_to_use=all output.counts.file=test_counts3.txt output.tree_with_id.file=test_id3.nwk family.name=test3 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
 

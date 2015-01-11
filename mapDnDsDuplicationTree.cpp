@@ -315,23 +315,23 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
   AncestralStateReconstruction *asr = new MarginalAncestralStateReconstruction(&tl);
   //bool  probMethod = true;
  
-      TreeTemplate<Node> ttree ( tl.getTree() );
-      vector<Node *> nodes = ttree.getNodes();
-      size_t nbNodes = nodes.size();
-      // Get the rate class with maximum posterior probability:
-      vector<size_t> classes = tl.getRateClassWithMaxPostProbOfEachSite();
-      // Get the posterior rate, i.e. rate averaged over all posterior probabilities:
-      Vdouble rates = tl.getPosteriorRateOfEachSite();
-      // Get the ancestral sequences:
-      vector<Sequence*> sequences(nbNodes);
-      for (size_t i = 0; i < nbNodes; i++) {
-        Node *node = nodes[i];
-          if (node->isLeaf()) {
-            sequences[i] = sites->getSequence(node->getName() ).clone();
-          } else {
-            sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
-          }
+  TreeTemplate<Node> ttree ( tl.getTree() );
+  vector<Node *> nodes = ttree.getNodes();
+  size_t nbNodes = nodes.size();
+  // Get the rate class with maximum posterior probability:
+  vector<size_t> classes = tl.getRateClassWithMaxPostProbOfEachSite();
+  // Get the posterior rate, i.e. rate averaged over all posterior probabilities:
+  Vdouble rates = tl.getPosteriorRateOfEachSite();
+  // Get the ancestral sequences:
+  vector<Sequence*> sequences(nbNodes);
+  for (size_t i = 0; i < nbNodes; i++) {
+    Node *node = nodes[i];
+      if (node->isLeaf()) {
+        sequences[i] = sites->getSequence(node->getName() ).clone();
+      } else {
+        sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
       }
+  }
 
       //Now we have all the sequences at all nodes, including leaves
       //We need to compute counts
@@ -478,111 +478,127 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
                     std::vector<unsigned int>& sumSubst )
 {
   vector < std::string > outputMatrix;
-  /*string head  = string("NodeID") + string("\t") + string("FatherNodeID") + string("\t") + string("SpID") + string("\t") + string("FatherSpID") + string("\t") + string("FatherSon") ;
-  for (size_t type = 0; type < nbSubstitutionTypes; ++type) {
-    head = head + "\t" + reg->getTypeName(type+1) ;
-  }
-  head = head + "\n";
-  outputMatrix.push_back(head);*/
   string line = "";
-  for (size_t i = 0; i < ids.size(); ++i) {
+  size_t numNodes = cTree->getNumberOfNodes();
+  for (size_t i = 0; i < numNodes; ++i) {
+    Node * node = cTree->getNode(ids[i]);
     if (cTree->hasFather(ids[i])) {
-      Node * node = cTree->getNode(ids[i]);
       if (node->getFather()->hasNodeProperty("S") && node->hasNodeProperty("S")) {
-	if (counts[i].size() > 0) {
-	      for ( std::map< int, vector<unsigned int> >::const_iterator it = counts[i].begin(); it != counts[i].end(); it++ ) {
-          for (size_t j = 0; j < it->second.size(); ++j) {
-            size_t type = it->second[j];
-            line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
-            sumSubst[it->first] += 1;
-            outputMatrix.push_back(line);
-          }
-	      }
-	//      std::map< int, vector<unsigned int> >::const_iterator seqtosp;
-     //   line = TextTools::toString(ids[i]) +  "\t" + TextTools::toString(node->getFather()->getId()) + "\t" + TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + "\t" + TextTools::toString(*(dynamic_cast<const BppString*>(node->getFather()->getNodeProperty("S"))));
- 	}
- 	/*if (spTree->getNode(TextTools::toInt(TextTools::toString(*(dynamic_cast<const BppString*>(cTree->getNode(ids[i])->getNodeProperty("S"))))))->hasFather() && (spTree->getNode(TextTools::toInt(TextTools::toString(*(dynamic_cast<const BppString*>(cTree->getNode(ids[i])->getNodeProperty("S"))))))->getFather()->getId() == TextTools::toInt(TextTools::toString(*(dynamic_cast<const BppString*>(cTree->getNode(ids[i])->getFather()->getNodeProperty("S")))))) ) { // if the current branch in the gene tree corresponds to a single branch of the species tree
-          //line = line +"\t" + "Y";
+
+        if (counts[i].size() > 0) { //There are substitution events
+              for ( std::map< int, vector<unsigned int> >::const_iterator it = counts[i].begin(); it != counts[i].end(); it++ ) {
+                for (size_t j = 0; j < it->second.size(); ++j) {
+                  size_t type = it->second[j];
+                  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+                  sumSubst[it->first] += 1;
+                  outputMatrix.push_back(line);
+                }
+              }
         }
-        else */if (node->getNumberOfSons()>0 ) { // node has children, could be a duplication, and could contain losses
-	std::vector <Node *> sons = node->getSons();
+      }
+    }
+    
+     if ( node->hasNodeProperty("S") ) {
+        if (node->getNumberOfSons()>0 ) { // node has children, could be a duplication, and could contain losses
+          int fatherSpID = TextTools::toInt ( ( dynamic_cast<const BppString*> ( node->getNodeProperty ( "S" ) ) )->toSTL() );
+          std::vector <Node *> sons = node->getSons();
+          int a = TextTools::toInt ( ( dynamic_cast<const BppString*> ( sons[0]->getNodeProperty ( "S" ) ) )->toSTL() );
+          int b = TextTools::toInt ( ( dynamic_cast<const BppString*> ( sons[1]->getNodeProperty ( "S" ) ) )->toSTL() );
 
-
-        int a = TextTools::toInt ( ( dynamic_cast<const BppString*> ( sons[0]->getNodeProperty ( "S" ) ) )->toSTL() );
-        int b = TextTools::toInt ( ( dynamic_cast<const BppString*> ( sons[1]->getNodeProperty ( "S" ) ) )->toSTL() );
-
-        int aold = a;
-        int bold = b;
-     /*   int lossA = 0;
-        int lossB = 0;
-*/
-        while ( a!=b ) {
-            if ( a>b ) {
-	      int olda = a;
-	      Node* nodea = spTree->getNode ( a );
-              a = nodea->getFather()->getId();
-	      std::vector <Node *> sonsA = nodea->getFather()->getSons();
-	      int lostBranch;
-	      if (sonsA[0]->getId() == olda) {
-		lostBranch = sonsA[1]->getId(); 
-	      }
-	      else {
-		lostBranch = sonsA[0]->getId();
-	      }
-		  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
-		  outputMatrix.push_back(line);
-
-               // lossA = lossA +1;
+          
+          int aold = a;
+          int bold = b;
+          while ( a!=b ) {
+              if ( a>b ) {
+                int olda = a;
+                Node* nodea = spTree->getNode ( a );
+                a = nodea->getFather()->getId();
+                if (a == fatherSpID) {  }
+                else {
+                  std::vector <Node *> sonsA = nodea->getFather()->getSons();
+                  int lostBranch;
+                  if (sonsA[0]->getId() == olda) {
+                    lostBranch = sonsA[1]->getId(); 
+                  }
+                  else {
+                    lostBranch = sonsA[0]->getId();
+                  }
+                  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
+                outputMatrix.push_back(line);
+                      // lossA = lossA +1;
                 }
-            else {
-	      int oldb = b;
-	      Node* nodeb = spTree->getNode ( b );
-
-	                    b = nodeb->getFather()->getId();
-	      std::vector <Node *> sonsb = nodeb->getFather()->getSons();
-	      int lostBranch;
-	      if (sonsb[0]->getId() == oldb) {
-		lostBranch = sonsb[1]->getId(); 
-	      }
-	      else {
-		lostBranch = sonsb[0]->getId();
-	      }
-		  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
-	  outputMatrix.push_back(line);
-
-	      //                lossB = lossB + 1;
+              }
+              else {
+                int oldb = b;
+                Node* nodeb = spTree->getNode ( b );
+                b = nodeb->getFather()->getId();
+                if (b == fatherSpID) {   }
+                else {
+                  std::vector <Node *> sonsb = nodeb->getFather()->getSons();
+                  int lostBranch;
+                  if (sonsb[0]->getId() == oldb) {
+                    lostBranch = sonsb[1]->getId(); 
+                  }
+                  else {
+                    lostBranch = sonsb[0]->getId();
+                  }
+                  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
+              outputMatrix.push_back(line);
                 }
+          //                lossB = lossB + 1;
+              }
             }
-      /*  sons[0]->setBranchProperty ( "L", BppString ( TextTools::toString ( lossA ) ) );
-        sons[1]->setBranchProperty ( "L", BppString ( TextTools::toString ( lossB ) ) );
-        node->setNodeProperty ( "S", BppString ( TextTools::toString ( a ) ) );*/
-        if ( ( a == aold ) || ( a == bold ) ) {
+        /*  sons[0]->setBranchProperty ( "L", BppString ( TextTools::toString ( lossA ) ) );
+          sons[1]->setBranchProperty ( "L", BppString ( TextTools::toString ( lossB ) ) );
+          node->setNodeProperty ( "S", BppString ( TextTools::toString ( a ) ) );*/
+          if ( ( a == aold ) || ( a == bold ) ) { //There was a duplication
             node->setBranchProperty ( "Ev", BppString ( "D" ) );
-	    int dupBranch = a;
-	    line = "event(" +  TextTools::toString(dupBranch) + ",\"" + familyName + "\"," + "duplication" + ")" ;
-	    outputMatrix.push_back(line);
+            int dupBranch = a;
+            line = "event(" +  TextTools::toString(dupBranch) + ",\"" + familyName + "\"," + "duplication" + ")" ;
+          outputMatrix.push_back(line);
+            //We also need to check whether tere have been losses
+            if (aold > bold) { //loss in the lineage  leading to a
+              a = aold;
+                int olda = a;
+                Node* nodea = spTree->getNode ( a );
+                a = nodea->getFather()->getId();
+                  std::vector <Node *> sonsA = nodea->getFather()->getSons();
+                  int lostBranch;
+                  if (sonsA[0]->getId() == olda) {
+                    lostBranch = sonsA[1]->getId(); 
+                  }
+                  else {
+                    lostBranch = sonsA[0]->getId();
+                  }
+                  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
+                outputMatrix.push_back(line);
+                      // lossA = lossA +1;
+                
 
             }
-  /*      else {
-            node->setBranchProperty ( "Ev", BppString ( "S" ) );
+            else { //loss in the lineage leading to b
+              b = bold;
+                              int oldb = b;
+                Node* nodeb = spTree->getNode ( b );
+                b = nodeb->getFather()->getId();
+                  std::vector <Node *> sonsb = nodeb->getFather()->getSons();
+                  int lostBranch;
+                  if (sonsb[0]->getId() == oldb) {
+                    lostBranch = sonsb[1]->getId(); 
+                  }
+                  else {
+                    lostBranch = sonsb[0]->getId();
+                  }
+                  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
+              outputMatrix.push_back(line);
+                
             }
-*/
-
-
-/*
-	  if ( sonID = nodeID) { // duplication event
-          line = line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(cTree->getNode(ids[i])->getNodeProperty("S")))) + ",\"" + familyName + "\",\"D\")" ;
-	  outputMatrix.push_back(line);
-	  }
-	  */
-	  
-	}
-
-	}
+          }
+        }
+      }
       else {
         std::cout << "No S Node property"<<std::endl;
       }
-    }
   }
   return outputMatrix;
 }
