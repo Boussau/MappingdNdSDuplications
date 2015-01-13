@@ -508,6 +508,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
           
           int aold = a;
           int bold = b;
+         // std::cout << "aold: "<< aold << " bold: "<< bold << std::endl;
           while ( a!=b ) {
               if ( a>b ) {
                 int olda = a;
@@ -558,6 +559,8 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
           outputMatrix.push_back(line);
             //We also need to check whether tere have been losses
             if (aold > bold) { //loss in the lineage  leading to a
+                        //std::cout << "BIS aold: "<< aold << " bold: "<< bold << std::endl;
+
               a = aold;
                 int olda = a;
                 Node* nodea = spTree->getNode ( a );
@@ -576,9 +579,11 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
                 
 
             }
-            else { //loss in the lineage leading to b
-              b = bold;
-                              int oldb = b;
+            else if (bold>aold) { //loss in the lineage leading to b
+                        //std::cout << "TER aold: "<< aold << " bold: "<< bold << std::endl;
+
+                b = bold;
+                int oldb = b;
                 Node* nodeb = spTree->getNode ( b );
                 b = nodeb->getFather()->getId();
                   std::vector <Node *> sonsb = nodeb->getFather()->getSons();

@@ -2,7 +2,7 @@
 #g++  -pipe -o mapDnDsDuplicationTree mapDnDsDuplicationTree.cpp -I/usr/local/include  -L. -L/usr/local/lib  -g -Wall -fopenmp -std=c++0x -lbpp-core -lbpp-seq -lbpp-phyl
 
 # For static compilation:
- g++ -s -o mapDnDsDuplicationTree mapDnDsDuplicationTree.cpp -std=c++0x -I/usr/local/include  -L. -L/usr/local/lib  -lbpp-phyl -lbpp-seq -lbpp-core --static 
+g++ -s -o mapDnDsDuplicationTree mapDnDsDuplicationTree.cpp -std=c++0x -I/usr/local/include  -L. -L/usr/local/lib  -lbpp-phyl -lbpp-seq -lbpp-core --static 
 
 
 
