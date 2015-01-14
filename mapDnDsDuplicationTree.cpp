@@ -207,6 +207,113 @@ vector< vector<unsigned int> > getCountsPerBranch(
 }
 
 
+/******************************************************************************/
+
+
+vector< vector<unsigned int> > getCountsPerBranchASR(
+                                                  DRTreeLikelihood& tl,
+                                                  const vector<int>& ids,
+                                                  VectorSiteContainer* sites,
+                                                  const SubstitutionRegister& reg,
+                                                  bool stationarity = true,
+                                                  double threshold = -1)
+{
+    AncestralStateReconstruction *asr = new MarginalAncestralStateReconstruction(&tl);
+  //bool  probMethod = true;
+ 
+  TreeTemplate<Node> ttree ( tl.getTree() );
+  vector<Node *> nodes = ttree.getNodes();
+  size_t nbNodes = nodes.size();
+  // Get the rate class with maximum posterior probability:
+  vector<size_t> classes = tl.getRateClassWithMaxPostProbOfEachSite();
+  // Get the posterior rate, i.e. rate averaged over all posterior probabilities:
+  Vdouble rates = tl.getPosteriorRateOfEachSite();
+  // Get the ancestral sequences:
+  vector<Sequence*> sequences(nbNodes);
+  for (size_t i = 0; i < nbNodes; i++) {
+    Node *node = nodes[i];
+      if (node->isLeaf()) {
+        sequences[i] = sites->getSequence(node->getName() ).clone();
+      } else {
+        sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
+      }
+  }
+
+      //Now we have all the sequences at all nodes, including leaves
+      //We need to compute counts
+        //vector on branches, map on sites, last vector on substitution types
+  vector<  vector<unsigned int>  > counts(ids.size()); 
+  
+  unsigned int nbSites = sites->getNumberOfSites();
+
+  int nbTypes = reg.getNumberOfSubstitutionTypes();
+  const Alphabet *alpha = tl.getAlphabet()->clone();
+  /*  
+    const SubstitutionModel *model = tl.getSubstitutionModel(0, 0)->clone();*/
+  for (size_t k = 0; k < nbNodes; ++k) {
+    if (nodes[k]->hasFather() ) {
+        //std::cout << "HAHA " << nodes[k]->getId() /*- 1*/ <<std::endl;
+      Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
+      Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
+
+      
+      vector<double> tmp(nbTypes, 0);
+      for (unsigned int t = 0; t < nbTypes; ++t) {
+        counts[k].push_back(0);
+      }
+     // unsigned int nbIgnored = 0;
+      //bool error = false;
+      vector<double> countsf(nbTypes, 0.0);
+
+      for (unsigned int i = 0; i < nbSites; ++i) {
+        for (unsigned int t = 0; t < nbTypes; ++t) {
+          countsf[t] = 0.0;
+        }
+
+        try {
+        //Now we compare the parent and child sequences
+          if ( seqFather->getValue(i) != seqChild->getValue(i) ) { //There is a substitution
+          /*  std::cout << "Thre is a sub "<< seqFather->getValue(i) <<" "<< seqChild->getValue(i) << std::endl;
+            std::cout << "Thre is a sub "<< seqFather->getChar(i) <<" "<< seqChild->getChar(i) << std::endl;
+            std::cout << "Thre is a sub "<< alpha->charToInt( seqFather->getChar(i) ) <<" "<< alpha->charToInt( seqChild->getChar(i) ) << std::endl;
+                      std::cout << "Thre is a sub "<< model->getAlphabetStateAsInt( seqFather->getValue(i) ) <<" "<< model->getAlphabetStateAsInt ( seqChild->getValue(i) ) << std::endl;*/
+
+          // size_t type = reg.getType ( alpha->charToInt( seqFather->getChar(i) ), alpha->charToInt( seqChild->getChar(i) ) ) - 1 ;
+          
+          //std::cout << "seqFather->getValue(i): " << seqFather->getValue(i) << " "<< seqFather->getChar(i) <<std::endl;
+          //std::cout << "seqChild->getValue(i): " << seqChild->getValue(i) << " " << seqChild->getChar(i) <<std::endl;
+          if (alpha->isUnresolved(seqFather->getValue(i) ) ||  alpha->isUnresolved( seqChild->getValue(i) ) ) {
+           // std::cout << "ARE UNRESOLVED" << std::endl;
+          }
+          else {
+            size_t type = reg.getType ( seqFather->getValue(i) , seqChild->getValue(i) ) - 1 ; 
+            if (type > nbTypes || type < 0) {
+              std::cout << "Substitution out of the admitted alphabet. Not counting."<<std::endl; 
+            }
+            else {
+              countsf[type] = 1;
+            }
+            //std::cout << "type: "<< type <<std::endl;
+            }
+          }
+        }
+        catch (Exception& ex) {
+          std::cout <<"Character out of the admitted alphabet. Possibly a substitution involving an unresolved state (e.g. N)... Not counting." << std::endl;
+        }
+        
+        for (unsigned int t = 0; t < nbTypes; ++t) {
+          //std::cout << "k "<< k << " i "<< i << " t "<< t << std::endl;
+          if (countsf[t] > 0) {
+            counts[k][t] = counts[k][t]+1 ;               
+          }
+        }
+      }
+    }
+  }   
+  return counts;
+}
+
+
 
 /******************************************************************************/
 
@@ -841,7 +948,13 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
     }
 else {
       vector< vector<unsigned int> > counts;
-    counts = getCountsPerBranch(drtl, ids, model.get(), *reg, stationarity, thresholdSat);
+      bool asr = ApplicationTools::getBooleanParameter("ancestral.state.reconstruction", mapnh.getParams(), true);
+      if (asr) {
+        counts = getCountsPerBranchASR(drtl, ids, sites, *reg, stationarity, thresholdSat );
+      }
+      else {
+        counts = getCountsPerBranch(drtl, ids, model.get(), *reg, stationarity, thresholdSat);
+      }
 
     //Write count trees:
     string treePathPrefix = ApplicationTools::getStringParameter("output.counts.tree.prefix", mapnh.getParams(), "none");
