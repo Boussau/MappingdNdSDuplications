@@ -348,7 +348,6 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
     if (nodes[k]->hasFather() ) {
         //std::cout << "HAHA " << nodes[k]->getId() /*- 1*/ <<std::endl;
       Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
-
       Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
 
       vector<double> tmp(nbTypes, 0);
@@ -374,7 +373,7 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
           //std::cout << "seqFather->getValue(i): " << seqFather->getValue(i) << " "<< seqFather->getChar(i) <<std::endl;
           //std::cout << "seqChild->getValue(i): " << seqChild->getValue(i) << " " << seqChild->getChar(i) <<std::endl;
           if (alpha->isUnresolved(seqFather->getValue(i) ) ||  alpha->isUnresolved( seqChild->getValue(i) ) ) {
-            //std::cout << "ARE UNRESOLVED" << std::endl;
+           // std::cout << "ARE UNRESOLVED" << std::endl;
           }
           else {
             size_t type = reg.getType ( seqFather->getValue(i) , seqChild->getValue(i) ) - 1 ; 
@@ -788,6 +787,9 @@ codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequ
     fasta->writeSequences( alnNames+".refined", *sites );
     
     DiscreteDistribution* rDist = new ConstantDistribution( 1. );
+    
+    tree->resetNodesId();
+
     
     DRHomogeneousTreeLikelihood drtl(*tree, *sites, model.get(), rDist, false, false);
     drtl.initialize();
