@@ -251,6 +251,7 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
   /*  
     const SubstitutionModel *model = tl.getSubstitutionModel(0, 0)->clone();*/
   for (size_t k = 0; k < nbNodes; ++k) {
+    std::cout << "k: "<< k << "; nodeid: " <<  nodes[k]->getId() <<std::endl;
     if (nodes[k]->hasFather() ) {
         //std::cout << "HAHA " << nodes[k]->getId() /*- 1*/ <<std::endl;
       Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
@@ -291,6 +292,16 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
               std::cout << "Substitution out of the admitted alphabet. Not counting."<<std::endl; 
             }
             else {
+              if (seqChild->getName() == "FBgn0206617_vir") {
+                std::cout << " FBgn0206617_vir subst of type " << type << std::endl;
+              }
+              else if (seqChild->getName() == "Or19a_mel") {
+                std::cout << "Or19a_mel subst of type " << type << std::endl;
+              }
+              else if (seqChild->getName() == "Or19b_mel") {
+                std::cout << "Or19b_mel subst of type " << type << std::endl;
+              }
+
               countsf[type] = 1;
             }
             //std::cout << "type: "<< type <<std::endl;

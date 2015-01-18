@@ -10,3 +10,16 @@ rm test_counts3.txt ; ../mapDnDsDuplicationTree species.tree.file=test3.Sptree i
 #Simple test, output as trees
 rm test_counts4.txt ; ../mapDnDsDuplicationTree species.tree.file=test4.Sptree input.tree.file=test4.tree  input.sequence.file=test4.fa  input.sequence.sites_to_use=all output.counts.file=test_counts4.txt output.tree_with_id.file=test_id4.nwk family.name=test4 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts4
 
+#DnDs test, output as trees
+rm test_counts5.txt ; ../mapDnDsDuplicationTree species.tree.file=test5.Sptree input.tree.file=test5.tree  input.sequence.file=test5.fa  input.sequence.sites_to_use=all output.counts.file=test_counts5.txt output.tree_with_id.file=test_id5.nwk family.name=test5 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts5
+
+#DnDs test with gaps, wrong node ids in the gene tree, output as trees
+rm test_counts6.txt ; ../mapDnDsDuplicationTree species.tree.file=test6.Sptree input.tree.file=test6.tree  input.sequence.file=test6.fa  input.sequence.sites_to_use=all output.counts.file=test_counts6.txt output.tree_with_id.file=test_id6.nwk family.name=test6 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts6
+
+#DnDs test with gaps, real data, output as trees
+rm test_counts7.txt ; ../mapDnDsDuplicationTree species.tree.file=test7.Sptree input.tree.file=test7.tree  input.sequence.file=test7.fa  input.sequence.sites_to_use=all output.counts.file=test_counts7.txt output.tree_with_id.file=test_id7.nwk family.name=test7 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts7
+
+#DnDs test with gaps, real data, output as trees
+rm test_counts8.txt ; ../mapDnDsDuplicationTree species.tree.file=test8.Sptree input.tree.file=test8.tree  input.sequence.file=test8.fa  input.sequence.sites_to_use=all output.counts.file=test_counts8.txt output.tree_with_id.file=test_id8.nwk family.name=test8 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts8
+
+
