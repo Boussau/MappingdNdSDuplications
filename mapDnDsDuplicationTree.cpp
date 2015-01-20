@@ -234,9 +234,9 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
     Node *node = nodes[i];
       if (node->isLeaf()) {
         //std::cout << "node->getName(): " << node->getName() << " id: " << node->getId() << " alt id: "<< i << std::endl;
-        sequences[i] = sites->getSequence(node->getName() ).clone();
+        sequences[node->getId()] = sites->getSequence(node->getName() ).clone();
       } else {
-        sequences[i] = asr->getAncestralSequenceForNode(node->getId() ); //This expects that the gene tree has been renumbered using resetNodesId
+        sequences[node->getId()] = asr->getAncestralSequenceForNode(node->getId() ); //This expects that the gene tree has been renumbered using resetNodesId
       }
   }
 
@@ -801,7 +801,7 @@ int main(int args, char ** argv)
     ApplicationTools::displayResult("Number of leaves", TextTools::toString(tree->getNumberOfLeaves()));
 
     tree->resetNodesId();
- // breadthFirstreNumber(*tree);
+   // breadthFirstreNumber(*tree);
     setNDProperty(tree);
 
     std::cout << nhx.treeToParenthesis (*tree) <<std::endl;
