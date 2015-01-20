@@ -22,4 +22,21 @@ rm test_counts7.txt ; ../mapDnDsDuplicationTree species.tree.file=test7.Sptree i
 #DnDs test with gaps, real data, output as trees
 rm test_counts8.txt ; ../mapDnDsDuplicationTree species.tree.file=test8.Sptree input.tree.file=test8.tree  input.sequence.file=test8.fa  input.sequence.sites_to_use=all output.counts.file=test_counts8.txt output.tree_with_id.file=test_id8.nwk family.name=test8 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts8
 
+#Several duplications and losses
+rm test_counts9.txt ; ../mapDnDsDuplicationTree species.tree.file=test9.Sptree input.tree.file=test9.tree  input.sequence.file=test9.fa  input.sequence.sites_to_use=all output.counts.file=test_counts9.txt output.tree_with_id.file=test_id9.nwk family.name=test9 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
+
+#Several duplications and more losses
+rm test_counts10.txt ; ../mapDnDsDuplicationTree species.tree.file=test10.Sptree input.tree.file=test10.tree  input.sequence.file=test10.fa  input.sequence.sites_to_use=all output.counts.file=test_counts10.txt output.tree_with_id.file=test_id10.nwk family.name=test10 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
+
+#More duplications and more losses...
+rm test_counts11.txt ; ../mapDnDsDuplicationTree species.tree.file=test11.Sptree input.tree.file=test11.tree  input.sequence.file=test11.fa  input.sequence.sites_to_use=all output.counts.file=test_counts11.txt output.tree_with_id.file=test_id11.nwk family.name=test11 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
+
+#More duplications and more losses...
+rm test_counts12.txt ; ../mapDnDsDuplicationTree species.tree.file=test12.Sptree input.tree.file=test12.tree  input.sequence.file=test12.fa  input.sequence.sites_to_use=all output.counts.file=test_counts12.txt output.tree_with_id.file=test_id12.nwk family.name=test12 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
+
+#Two losses in a row after a duplication. Expected losses: 13, 14, 10, 4.
+rm test_counts13.txt ; ../mapDnDsDuplicationTree species.tree.file=mel_yak_bia_suz_ana_pse_vir_clad_rooted input.tree.file=CDS_OR_allsp_protaligned_merge3.ReconciledTree76 input.sequence.file=CDS_OR_allsp_protaligned_merge3.fasta.nt_ali.fasta76  input.sequence.sites_to_use=all output.counts.file=test_counts13.txt output.tree_with_id.file=test_id13.nwk family.name=test13 site.and.branch=y optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y map.type=DnDs site.and.branch=y 'alphabet=Codon(letter=DNA)'
+
+#Several losses in a row. Expected losses: 13, 8, 6, 4.
+rm test_counts14.txt ; ../mapDnDsDuplicationTree species.tree.file=test14.Sptree input.tree.file=test14.tree  input.sequence.file=test14.fa  input.sequence.sites_to_use=all output.counts.file=test_counts14.txt output.tree_with_id.file=test_id14.nwk family.name=test14 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
 

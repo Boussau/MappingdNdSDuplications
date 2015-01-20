@@ -233,6 +233,7 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
   for (size_t i = 0; i < nbNodes; i++) {
     Node *node = nodes[i];
       if (node->isLeaf()) {
+        std::cout << "node->getName(): " << node->getName() << " id: " << node->getId() << " alt id: "<< i << std::endl;
         sequences[i] = sites->getSequence(node->getName() ).clone();
       } else {
         sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
@@ -257,6 +258,12 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
       Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
       Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
 
+      if (seqChild->getName() == "Or19a_mel") {
+       std::cout << seqFather->toString() << std::endl; 
+      }
+      if (seqChild->getName() == "Or19b_mel") {
+       std::cout << seqFather->toString() << std::endl; 
+      }
       
       vector<double> tmp(nbTypes, 0);
       for (unsigned int t = 0; t < nbTypes; ++t) {
@@ -581,6 +588,24 @@ vector < std::string > buildAnnotatedCountMatrix(
 
 
 /******************************************************************************/
+// a is the species in which there was a duplication
+// just below a, there was a loss
+int recoverLossClosestToDuplication(TreeTemplate<Node> * spTree, int a, int aold) {
+    Node* nodea = spTree->getNode ( a );
+    std::vector < Node *> sonsA = nodea->getSons();
+    std::vector < int > underlyingNodes = TreeTools::getNodesId(*spTree, sonsA[0]->getId());
+    int lostBranch;
+    if (VectorTools::contains<int>(underlyingNodes, aold)) {
+      lostBranch = sonsA[1]->getId(); 
+    }else {
+      lostBranch = sonsA[0]->getId(); 
+    }
+    return lostBranch;
+}
+/******************************************************************************/
+
+
+
 
       //vector on branches, map on sites, last vector on substitution types
  
@@ -621,8 +646,7 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
           std::vector <Node *> sons = node->getSons();
           int a = TextTools::toInt ( ( dynamic_cast<const BppString*> ( sons[0]->getNodeProperty ( "S" ) ) )->toSTL() );
           int b = TextTools::toInt ( ( dynamic_cast<const BppString*> ( sons[1]->getNodeProperty ( "S" ) ) )->toSTL() );
-
-          
+         // std::cout << "fatherSpID: " << fatherSpID<< "; a: "<< a << "; b: "<< b << std::endl;; 
           int aold = a;
           int bold = b;
          // std::cout << "aold: "<< aold << " bold: "<< bold << std::endl;
@@ -674,46 +698,22 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
             int dupBranch = a;
             line = "event(" +  TextTools::toString(dupBranch) + ",\"" + familyName + "\"," + "duplication" + ")" ;
           outputMatrix.push_back(line);
-            //We also need to check whether tere have been losses
-            if (aold > bold) { //loss in the lineage  leading to a
-                        //std::cout << "BIS aold: "<< aold << " bold: "<< bold << std::endl;
 
-              a = aold;
-                int olda = a;
-                Node* nodea = spTree->getNode ( a );
-                a = nodea->getFather()->getId();
-                  std::vector <Node *> sonsA = nodea->getFather()->getSons();
-                  int lostBranch;
-                  if (sonsA[0]->getId() == olda) {
-                    lostBranch = sonsA[1]->getId(); 
-                  }
-                  else {
-                    lostBranch = sonsA[0]->getId();
-                  }
-                  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
-                outputMatrix.push_back(line);
-                      // lossA = lossA +1;
+            //We also need to check whether there have been losses
+            if (aold > bold) { //loss in the lineage leading to a
+                       /* std::cout << "BIS aold: "<< aold << " bold: "<< bold << std::endl;
+                        std::cout << "BIS a: "<< a << " b: "<< b << std::endl;*/
+
+              int lostBranch = recoverLossClosestToDuplication(spTree, a, aold);
+              line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
+              outputMatrix.push_back(line);
                 
-
             }
             else if (bold>aold) { //loss in the lineage leading to b
                         //std::cout << "TER aold: "<< aold << " bold: "<< bold << std::endl;
-
-                b = bold;
-                int oldb = b;
-                Node* nodeb = spTree->getNode ( b );
-                b = nodeb->getFather()->getId();
-                  std::vector <Node *> sonsb = nodeb->getFather()->getSons();
-                  int lostBranch;
-                  if (sonsb[0]->getId() == oldb) {
-                    lostBranch = sonsb[1]->getId(); 
-                  }
-                  else {
-                    lostBranch = sonsb[0]->getId();
-                  }
-                  line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
+                int lostBranch = recoverLossClosestToDuplication(spTree, b, bold);
+                line = "event(" +  TextTools::toString(lostBranch) + ",\"" + familyName + "\"," + "loss" + ")" ;
               outputMatrix.push_back(line);
-                
             }
           }
         }
@@ -831,7 +831,7 @@ int main(int args, char ** argv)
 	}
 
 
-    //Now perform mapping using a JC model for ncleotides, or better model for protens and codons:
+    //Now perform mapping using a GTR model for ncleotides, or appropriate model for proteins and codons:
     unique_ptr<SubstitutionModel> model ;
     if (AlphabetTools::isNucleicAlphabet(alphabet)) {
 //      model.reset( new JCnuc(dynamic_cast<NucleicAlphabet*>(alphabet) ) );
@@ -847,7 +847,12 @@ int main(int args, char ** argv)
       //  model = new CodonNeutralReversibleSubstitutionModel(
         //                                                    dynamic_cast<const CodonAlphabet*>(geneticCode->getSourceAlphabet()),
           //                                                  new JCnuc(dynamic_cast<CodonAlphabet*>(alphabet)->getNucleicAlphabet()));
-       model.reset( PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams() ) );
+    //   model.reset( PhylogeneticsApplicationTools::getSubstitutionModel(alphabet, geneticCode.get(), sites, mapnh.getParams() ) );
+                unique_ptr<FrequenciesSet> codonFreqs ;
+        //codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons  ( CodonFrequenciesSet::F0, geneticCode->clone() ) );
+        codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons  ( CodonFrequenciesSet::F3X4, geneticCode->clone() ) );
+//    auto_ptr<FrequenciesSet> codonFreqs(freqReader.read(pCA, freqOpt, data, false));
+      model.reset(new YN98( geneticCode.get(), codonFreqs.release()));
       }
     }
     else
@@ -883,12 +888,6 @@ int main(int args, char ** argv)
   //  BppOFrequenciesSetFormat freqReader(BppOFrequenciesSetFormat::ALL, 0, 0);
    // freqReader.setGeneticCode(geneticCode.get()); //This uses the same instance as the one that will be used by the model.
 
-	unique_ptr<FrequenciesSet> codonFreqs ;
-codonFreqs.reset ( CodonFrequenciesSet::getFrequenciesSetForCodons 	( CodonFrequenciesSet::F0, geneticCode->clone() ) );
-
-//    auto_ptr<FrequenciesSet> codonFreqs(freqReader.read(pCA, freqOpt, data, false));
-
-      model.reset(new YN98( geneticCode.get(), codonFreqs.release()));
 
 
         reg = new DnDsSubstitutionRegister( dynamic_cast<CodonSubstitutionModel* >(model.get()), true); //true ensures that we count multiple substitutions as well
