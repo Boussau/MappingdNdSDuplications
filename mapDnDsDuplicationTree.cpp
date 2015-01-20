@@ -233,10 +233,10 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
   for (size_t i = 0; i < nbNodes; i++) {
     Node *node = nodes[i];
       if (node->isLeaf()) {
-        std::cout << "node->getName(): " << node->getName() << " id: " << node->getId() << " alt id: "<< i << std::endl;
+        //std::cout << "node->getName(): " << node->getName() << " id: " << node->getId() << " alt id: "<< i << std::endl;
         sequences[i] = sites->getSequence(node->getName() ).clone();
       } else {
-        sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
+        sequences[i] = asr->getAncestralSequenceForNode(node->getId() ); //This expects that the gene tree has been renumbered using resetNodesId
       }
   }
 
@@ -252,18 +252,18 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
   /*  
     const SubstitutionModel *model = tl.getSubstitutionModel(0, 0)->clone();*/
   for (size_t k = 0; k < nbNodes; ++k) {
-    std::cout << "k: "<< k << "; nodeid: " <<  nodes[k]->getId() <<std::endl;
+   // std::cout << "k: "<< k << "; nodeid: " <<  nodes[k]->getId() <<std::endl;
     if (nodes[k]->hasFather() ) {
         //std::cout << "HAHA " << nodes[k]->getId() /*- 1*/ <<std::endl;
       Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
       Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
 
-      if (seqChild->getName() == "Or19a_mel") {
+/*      if (seqChild->getName() == "Or19a_mel") {
        std::cout << seqFather->toString() << std::endl; 
       }
       if (seqChild->getName() == "Or19b_mel") {
        std::cout << seqFather->toString() << std::endl; 
-      }
+      }*/
       
       vector<double> tmp(nbTypes, 0);
       for (unsigned int t = 0; t < nbTypes; ++t) {
@@ -299,7 +299,7 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
               std::cout << "Substitution out of the admitted alphabet. Not counting."<<std::endl; 
             }
             else {
-              if (seqChild->getName() == "FBgn0206617_vir") {
+             /* if (seqChild->getName() == "FBgn0206617_vir") {
                 std::cout << " FBgn0206617_vir subst of type " << type << std::endl;
               }
               else if (seqChild->getName() == "Or19a_mel") {
@@ -307,7 +307,7 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
               }
               else if (seqChild->getName() == "Or19b_mel") {
                 std::cout << "Or19b_mel subst of type " << type << std::endl;
-              }
+              }*/
 
               countsf[type] = 1;
             }
@@ -725,7 +725,17 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
   return outputMatrix;
 }
 
+/******************************************************************************/
 
+void setNDProperty(TreeTemplate<Node> * tree) {
+  std::vector<Node* > nodes = tree->getNodes();
+  for (auto n = nodes.begin(); n!= nodes.end(); ++n) {
+      (*n)->setNodeProperty ( "ND", BppString ( TextTools::toString ( (*n)->getId() ) ) );
+  }
+  return;
+}
+
+/******************************************************************************/
 
 /*Compilation:
  g++ -lbpp-core -lbpp-seq -lbpp-phyl -o mapDnDsDuplicationTree mapDnDsDuplicationTree.cpp -std=c++0x -I/usr/local/include  -L. -L/usr/local/lib  
@@ -787,8 +797,12 @@ int main(int args, char ** argv)
 //    Tree* tree = PhylogeneticsApplicationTools::getTree(mapnh.getParams());
     string treeIn = ApplicationTools::getAFilePath("input.tree.file", mapnh.getParams(), false, false);
 
-    Tree* tree = nhx.read(treeIn);
+    TreeTemplate<Node> * tree = dynamic_cast < TreeTemplate < Node > * > ( nhx.read(treeIn) );
     ApplicationTools::displayResult("Number of leaves", TextTools::toString(tree->getNumberOfLeaves()));
+
+    tree->resetNodesId();
+ // breadthFirstreNumber(*tree);
+    setNDProperty(tree);
 
     std::cout << nhx.treeToParenthesis (*tree) <<std::endl;
     //Convert to NHX if input tree is newick or nexus?
@@ -828,6 +842,39 @@ int main(int args, char ** argv)
           ApplicationTools::displayWarning("No genetic code provided, standard code used.");
         }
         geneticCode.reset(SequenceApplicationTools::getGeneticCode(dynamic_cast<CodonAlphabet*>(alphabet)->getNucleicAlphabet(), code));
+        //Checking the sequences for stop codons.
+        std::map<std::string, std::vector<int> > stopCoords;
+        std::vector<string> seqNames = sites->getSequencesNames();
+        for (size_t i = 0; i < sites->getNumberOfSites(); i++)
+        {
+          const Site* site = &sites->getSite(i);
+          for (size_t j = 0; j < site->size(); j++)
+          {
+            if (geneticCode->isStop(site->getValue(j) ) )
+            { 
+              if (stopCoords.find(seqNames[j]) == stopCoords.end() ) {
+                std::vector<int> temp;
+                temp.push_back(i);
+                stopCoords[seqNames[j]] = temp;
+              }
+              else {
+                stopCoords[seqNames[j]].push_back(i);
+              }
+            }
+          }
+        }
+        if (stopCoords.empty()) {
+          ApplicationTools::displayMessage("No stop codon in the sequences, continuing.");
+          //std::cout << "No stop codon in the sequences, continuing." <<std::endl;
+        }
+        else {
+          ApplicationTools::displayError("Stop codons in the sequences. List of positions below:");
+          for (std::map<string,std::vector<int> >::iterator it=stopCoords.begin(); it!=stopCoords.end(); ++it) {
+              std::cout << "Sequence "<< it->first <<" : "<< std::endl ;
+              VectorTools::print(it->second);
+          }
+          throw Exception("Stop codons in the alignment. Using the option input.sequence.remove_stop_codons=yes would remove the entire columns that contain stop codons so that the program can run on this reduced alignment.");
+        }
 	}
 
 
@@ -905,9 +952,6 @@ int main(int args, char ** argv)
     
     DiscreteDistribution* rDist = new ConstantDistribution( 1. );
     
-    tree->resetNodesId();
-
-    
     DRHomogeneousTreeLikelihood drtl(*tree, *sites, model.get(), rDist, false, false);
     drtl.initialize();
     
@@ -925,15 +969,15 @@ int main(int args, char ** argv)
     //We want to get dN/dS ratio, so we need to set a default omega:
     auto_ptr<SubstitutionModel> nullModel(model->clone());
         
-        ParameterList pl;
-        const ParameterList pl0 = nullModel->getParameters();
+    ParameterList pl;
+    const ParameterList pl0 = nullModel->getParameters();
         
-	vector<string> pn = pl0.getMatchingParameterNames( "YN98.omega*" );
+    vector<string> pn = pl0.getMatchingParameterNames( "YN98.omega*" );
           for (size_t j = 0; j < pn.size(); ++j)
           {
             pl.addParameter(Parameter(pn[j], 1.0) );
           }
-	nullModel->matchParametersValues(pl);
+    nullModel->matchParametersValues(pl);
 
     if (siteBranchWise) {
        //vector on branches, map on sites, last vector on substitution types
