@@ -258,11 +258,11 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
       Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
       Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
 
-/*      if (seqChild->getName() == "Or19a_mel") {
-       std::cout << seqFather->toString() << std::endl; 
+      /*if (seqChild->getName() == "Or19a_mel") {
+       std::cout << seqFather->getName() << " : \n" << seqFather->toString() << std::endl; 
       }
       if (seqChild->getName() == "Or19b_mel") {
-       std::cout << seqFather->toString() << std::endl; 
+       std::cout << seqFather->toString() << " : \n"<< std::endl; 
       }*/
       
       vector<double> tmp(nbTypes, 0);
@@ -281,9 +281,11 @@ vector< vector<unsigned int> > getCountsPerBranchASR(
         try {
         //Now we compare the parent and child sequences
           if ( seqFather->getValue(i) != seqChild->getValue(i) ) { //There is a substitution
-          /*  std::cout << "Thre is a sub "<< seqFather->getValue(i) <<" "<< seqChild->getValue(i) << std::endl;
-            std::cout << "Thre is a sub "<< seqFather->getChar(i) <<" "<< seqChild->getChar(i) << std::endl;
-            std::cout << "Thre is a sub "<< alpha->charToInt( seqFather->getChar(i) ) <<" "<< alpha->charToInt( seqChild->getChar(i) ) << std::endl;
+            /*if (seqChild->getName() == "Or19a_mel" || seqChild->getName() == "Or19b_mel") {
+          std::cout << "There is a sub "<< seqFather->getChar(i) <<" "<< seqChild->getChar(i) << std::endl;
+            }*/
+            /*  std::cout << "There is a sub "<< seqFather->getValue(i) <<" "<< seqChild->getValue(i) << std::endl;
+            std::cout << "There is a sub "<< alpha->charToInt( seqFather->getChar(i) ) <<" "<< alpha->charToInt( seqChild->getChar(i) ) << std::endl;
                       std::cout << "Thre is a sub "<< model->getAlphabetStateAsInt( seqFather->getValue(i) ) <<" "<< model->getAlphabetStateAsInt ( seqChild->getValue(i) ) << std::endl;*/
 
           // size_t type = reg.getType ( alpha->charToInt( seqFather->getChar(i) ), alpha->charToInt( seqChild->getChar(i) ) ) - 1 ;
@@ -452,9 +454,9 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
   for (size_t i = 0; i < nbNodes; i++) {
     Node *node = nodes[i];
       if (node->isLeaf()) {
-        sequences[i] = sites->getSequence(node->getName() ).clone();
+        sequences[node->getId()] = sites->getSequence(node->getName() ).clone();
       } else {
-        sequences[i] = asr->getAncestralSequenceForNode(node->getId() );
+        sequences[node->getId()] = asr->getAncestralSequenceForNode(node->getId() );
       }
   }
 
@@ -957,6 +959,37 @@ int main(int args, char ** argv)
     
     //Optimization of parameters:
     PhylogeneticsApplicationTools::optimizeParameters(&drtl, drtl.getParameters(), mapnh.getParams(), "", true, true);
+    
+      double logL = drtl.getValue();
+    if (std::isinf(logL))
+    {
+      // This may be due to null branch lengths, leading to null likelihood!
+      ApplicationTools::displayWarning("!!! Warning!!! Likelihood is zero.");
+      ApplicationTools::displayWarning("!!! This may be due to branch length == 0.");
+      ApplicationTools::displayWarning("!!! All null branch lengths will be set to 0.000001.");
+      ParameterList pl = drtl.getBranchLengthsParameters();
+      for(unsigned int i = 0; i < pl.size(); i++)
+      {
+        if(pl[i].getValue() < 0.000001) pl[i].setValue(0.000001);
+      }
+      drtl.matchParametersValues(pl);
+      logL = drtl.getValue();
+    }
+    if (std::isinf(logL))
+    {
+      ApplicationTools::displayError("!!! Unexpected likelihood == 0.");
+      ApplicationTools::displayError("!!! Looking at each site:");
+      for(unsigned int i = 0; i < sites->getNumberOfSites(); i++)
+      {
+        (*ApplicationTools::error << "Site " << sites->getSite(i).getPosition() << "\tlog likelihood = " << drtl.getLogLikelihoodForASite(i)).endLine();
+      }
+      ApplicationTools::displayError("!!! 0 values (inf in log) may be due to computer overflow, particularily if datasets are big (>~500 sequences).");
+      exit(-1);
+    }
+
+    
+    
+    
     
     vector<int> ids = drtl.getTree().getNodesId();
     ids.pop_back(); //remove root id.
