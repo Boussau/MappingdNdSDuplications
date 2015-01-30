@@ -1,7 +1,7 @@
 # Introduction
 mapDnDsSuplications is a program to map both substitution events and events of duplications and losses. in spite of the name, it can work not only with codons, but also with DNA or amino-acid alphabets. The syntax to the program follows the Bppsuite conventions. To run it, you need a reconciled gene tree in NHX format output by Phyldog, the corresponding species tree, and the alignment.
 
-# Comiplation
+# Compilation
 A static compiled executable is provided for Linux systems. Otherwise I provide a basic compile command in the "compile" file.
 
 # Output format
