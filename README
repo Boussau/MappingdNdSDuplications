@@ -1,0 +1,16 @@
+mapDnDsSuplications is a program to map both substitution events and events of duplications and losses. in spite of the name, it can work not only with codons, but also with DNA or amino-acid alphabets. The syntax to the program follows the Bppsuite conventions. To run it, you need a reconciled gene tree in NHX format output by Phyldog, the corresponding species tree, and the alignment.
+
+Examples to run the program: 
+
+#Mapping all substitution events on protein sequences (quick and dirty, because the optimization is stopped very quickly, after 2 rounds or as soon as the loglikelihood improves by less than 10 points. It's probably better to use e.g. 1000 and 0.1 if you want to have robust substitution counts, but it does not matter if you're just interested in duplications and losses.). The option site.and.branch=y means that a table with events per site and per branch (including duplication/loss events) is output. Ancestral state reconstruction is used, meaning that 1 substitution is counted if there is a difference at a site between ML reconstructed parent and child sequences.
+rm test_counts.txt ; ../mapDnDsDuplicationTree species.tree.file=test.Sptree input.tree.file=test.tree  input.sequence.file=test.fa  input.sequence.sites_to_use=all output.counts.file=test_counts.txt output.tree_with_id.file=test_id.nwk family.name=test map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y
+
+
+#Mapping dN and dS substitutions on codon sequences, using the option site.and.branch=n, meaning that dN and dS numbers of substitutions are output as trees (one tree in which branch lengths are dN, one tree in which they are dS).
+rm test_counts4.txt ; ../mapDnDsDuplicationTree species.tree.file=test4.Sptree input.tree.file=test4.tree  input.sequence.file=test4.fa  input.sequence.sites_to_use=all output.counts.file=test_counts4.txt output.tree_with_id.file=test_id4.nwk family.name=test4 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=y output.counts.tree.prefix=treeCounts4
+
+#Same as above, but this time we do not use ancestral state reconstruction. This time we use proper substitution mapping, whcih means that at each site the expected number of substitutions of each type (here, dN and dS) are computed. Output as trees as above. This should be more robust than ancestral reconstruction based techniques, but is less useful when one wants to pinpoint precisely what transitions occurred at each site and on each branch.
+rm test_counts4.txt ; ../mapDnDsDuplicationTree species.tree.file=test4.Sptree input.tree.file=test4.tree  input.sequence.file=test4.fa  input.sequence.sites_to_use=all output.counts.file=test_counts4.txt output.tree_with_id.file=test_id4.nwk family.name=test4 map.type=DnDs site.and.branch=n 'alphabet=Codon(letter=DNA)' optimization.tolerance=10 optimization.max_number_f_eval=2 ancestral.state.reconstruction=n output.counts.tree.prefix=treeCounts4
+
+
+
