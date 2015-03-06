@@ -640,11 +640,15 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
                  // line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
                   std::string typeName = reg->getTypeName(type+1);
                   StringTokenizer st1( typeName, "->", true);
-                  std::string startingChar = st1.nextToken();
-                  std::string arrivingChar = st1.nextToken();
-                  std::string betterPhrasing = "substitution(" + startingChar + ","+ arrivingChar + "," ; 
-                  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + betterPhrasing + TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
-
+                  if (st1.numberOfRemainingTokens() == 2) {
+                    std::string startingChar = st1.nextToken();
+                    std::string arrivingChar = st1.nextToken();
+                    std::string betterPhrasing = "substitution(" + startingChar + ","+ arrivingChar + "," ; 
+                    line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + betterPhrasing + TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+                  }
+                  else {
+                    line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+                  }
                   sumSubst[it->first] += 1;
                   outputMatrix.push_back(line);
                 }
