@@ -458,6 +458,8 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
       } else {
         sequences[node->getId()] = asr->getAncestralSequenceForNode(node->getId() );
       }
+             // std::cout << "Seq "<< node->getId()<< " : "<< sequences[node->getId()]->toString () <<std::endl;
+
   }
 
       //Now we have all the sequences at all nodes, including leaves
@@ -477,6 +479,8 @@ vector < map< int, vector<unsigned int> > > getCountsPerBranchPerSiteASR(
       Sequence* seqChild = sequences.at( nodes[k]->getId() /*- 1*/ );
       Sequence* seqFather = sequences.at( nodes[k]->getFather()->getId() /*- 1*/ );
 
+      
+      
       vector<double> tmp(nbTypes, 0);
      // unsigned int nbIgnored = 0;
       //bool error = false;
@@ -633,7 +637,14 @@ vector < std::string > buildAnnotatedSitewiseCountOutput(
               for ( std::map< int, vector<unsigned int> >::const_iterator it = counts[i].begin(); it != counts[i].end(); it++ ) {
                 for (size_t j = 0; j < it->second.size(); ++j) {
                   size_t type = it->second[j];
-                  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+                 // line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + reg->getTypeName(type+1) + "("+ TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+                  std::string typeName = reg->getTypeName(type+1);
+                  StringTokenizer st1( typeName, "->", true);
+                  std::string startingChar = st1.nextToken();
+                  std::string arrivingChar = st1.nextToken();
+                  std::string betterPhrasing = "substitution(" + startingChar + ","+ arrivingChar + "," ; 
+                  line = "event(" +  TextTools::toString(*(dynamic_cast<const BppString*>(node->getNodeProperty("S")))) + ",\"" + familyName + "\"," + betterPhrasing + TextTools::toString<int>(it->first + 1) + "))" ; //Adding plus 1, otherwise numbering starts at 0
+
                   sumSubst[it->first] += 1;
                   outputMatrix.push_back(line);
                 }

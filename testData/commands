@@ -40,3 +40,12 @@ rm test_counts13.txt ; ../mapDnDsDuplicationTree species.tree.file=mel_yak_bia_s
 #Several losses in a row. Expected losses: 13, 8, 6, 4.
 rm test_counts14.txt ; ../mapDnDsDuplicationTree species.tree.file=test14.Sptree input.tree.file=test14.tree  input.sequence.file=test14.fa  input.sequence.sites_to_use=all output.counts.file=test_counts14.txt output.tree_with_id.file=test_id14.nwk family.name=test14 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
 
+##One duplication, one loss
+rm test_counts15.txt ; ../mapDnDsDuplicationTree species.tree.file=test15.Sptree input.tree.file=test15.tree  input.sequence.file=test15.fa  input.sequence.sites_to_use=all output.counts.file=test_counts15.txt output.tree_with_id.file=test_id15.nwk family.name=test15 map.type=All site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_f_eval=2 count.max=30 ancestral.state.reconstruction=y
+
+
+
+#Prestin gene. Expected convergent substitutions at site 2286 in Myotis (branch 48; position 395 in Myotis) and Tursiops (branch 60, position 373 in Tursiops). At site 110 there should not be convergent substitutions.
+rm counts_Prestin.txt ; ../mapDnDsDuplicationTree  species.tree.file=speciesTreeFromCarine  input.tree.file=alimafft_aTRAM_G00261S50_Selected_phylomergeMERGED.ReconciledTree input.sequence.file=G00261S50.aa.fasta input.sequence.sites_to_use=all input.sequence.max_gap_allowed=80% output.counts.file=counts_Prestin.txt output.tree_with_id.file=tree_Prestin_withId.tree output.species.tree_with_id.file=spTreePrestinWithId.tree family.name=prestin site.and.branch=y alphabet=Protein optimization.tolerance=10 optimization.max_number_of_eval=2 
+
+
